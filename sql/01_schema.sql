@@ -1,5 +1,3 @@
-CREATE DATABASE IF NOT EXISTS pharma_counterfeit_db;
-USE pharma_counterfeit_db;
 -- =====================================================================
 -- Pharma Supply Chain DBMS Project
 -- 01_schema.sql : database, 15 tables and 1 view
@@ -15,6 +13,8 @@ USE pharma_counterfeit_db;
 -- write-once logs).
 -- =====================================================================
 
+CREATE DATABASE IF NOT EXISTS pharma_counterfeit_db;
+USE pharma_counterfeit_db;
 
 -- ---------------------------------------------------------------------
 -- OPTIONAL RESET: to rebuild from scratch, remove the "-- " in front of
@@ -369,4 +369,3 @@ SELECT l.link_id,
        END AS link_type
 FROM link l
 JOIN participant p ON p.participant_id = l.from_participant;
-SHOW TABLES;

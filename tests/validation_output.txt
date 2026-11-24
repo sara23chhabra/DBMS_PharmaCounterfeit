@@ -1,0 +1,979 @@
+--------------
+-- =====================================================================
+--------------
+
+--------------
+-- Pharma Supply Chain DBMS Project
+--------------
+
+--------------
+-- validation_tests.sql : validation demo for the teacher document (Person A)
+--------------
+
+--------------
+--
+--------------
+
+--------------
+-- Needs: 01_schema.sql, the seed data, 02_triggers.sql, 03_procedures.sql.
+--------------
+
+--------------
+--
+--------------
+
+--------------
+-- Most tests are SUPPOSED to fail; the error message is the result.
+--------------
+
+--------------
+-- Run from a terminal so the script continues after each error and the
+--------------
+
+--------------
+-- output lands in one file:
+--------------
+
+--------------
+--
+--------------
+
+--------------
+--   mysql -u root -p --force --verbose --unbuffered --table pharma_counterfeit_db < tests/validation_tests.sql > validation_output.txt 2>&1
+--------------
+
+--------------
+--
+--------------
+
+--------------
+-- (In Workbench a script stops at the first error; there, run one test
+--------------
+
+--------------
+--  at a time instead.)
+--------------
+
+--------------
+--
+--------------
+
+--------------
+-- The last section deletes everything the tests created, so the database
+--------------
+
+--------------
+-- ends as it started. Do not run the ledger writer in the middle.
+--------------
+
+--------------
+--
+--------------
+
+--------------
+-- IDs from the seed: S3 = 3, M1 = 5, M2 = 6, D1 = 8, R1 = 23, CONSUMER = 103.
+--------------
+
+--------------
+-- =====================================================================
+--------------
+
+--------------
+SET @seed_loading = NULL
+--------------
+
+--------------
+SET @tamper_demo  = NULL
+--------------
+
+--------------
+-- Remember where the tables end, for the cleanup at the bottom.
+--------------
+
+--------------
+SELECT COALESCE(MAX(flag_id), 0)     INTO @f0  FROM anomaly_flag
+--------------
+
+--------------
+SELECT COALESCE(MAX(event_id), 0)    INTO @e0  FROM trace_event
+--------------
+
+--------------
+SELECT COALESCE(MAX(shipment_id), 0) INTO @sh0 FROM shipment
+--------------
+
+--------------
+SELECT COALESCE(MAX(batch_id), 0)    INTO @b0  FROM batch
+--------------
+
+--------------
+SELECT COALESCE(MAX(history_id), 0)  INTO @h0  FROM license_history
+--------------
+
+--------------
+-- A distributor that M1 supplies, and a retailer that distributor supplies.
+--------------
+
+--------------
+SELECT to_participant INTO @d FROM link WHERE from_participant = 5  ORDER BY link_id LIMIT 1
+--------------
+
+--------------
+SELECT to_participant INTO @r FROM link WHERE from_participant = @d ORDER BY link_id LIMIT 1
+--------------
+
+--------------
+-- Two lots delivered to M1, and one delivered to M2.
+--------------
+
+--------------
+SELECT GROUP_CONCAT(lot_id) INTO @lots
+FROM (SELECT lot_id FROM material_lot WHERE manufacturer_id = 5 ORDER BY lot_id LIMIT 2) x
+--------------
+
+--------------
+SELECT lot_id INTO @other_lot FROM material_lot WHERE manufacturer_id = 6 ORDER BY lot_id LIMIT 1
+--------------
+
+--------------
+-- Batch numbers unique to this run.
+--------------
+
+--------------
+SET @bn = CONCAT('VT-', DATE_FORMAT(NOW(), '%d%H%i%s'))
+--------------
+
+--------------
+SELECT @d AS distributor, @r AS retailer, @lots AS m1_lots, @other_lot AS m2_lot, @bn AS batch_no
+--------------
+
++-------------+----------+---------+--------+-------------+
+| distributor | retailer | m1_lots | m2_lot | batch_no    |
++-------------+----------+---------+--------+-------------+
+|          10 |       32 | 3,7     |      1 | VT-24015417 |
++-------------+----------+---------+--------+-------------+
+--------------
+-- =====================================================================
+--------------
+
+--------------
+-- PART V : constraints (CHECK, FOREIGN KEY, UNIQUE) from 01_schema.sql
+--------------
+
+--------------
+-- =====================================================================
+--------------
+
+--------------
+SELECT 'V1: drug with a 5-digit GTIN' AS test
+--------------
+
++------------------------------+
+| test                         |
++------------------------------+
+| V1: drug with a 5-digit GTIN |
++------------------------------+
+--------------
+INSERT INTO drug (generic_name, brand_name, strength, dosage_form, units_per_pack, gtin, pack_price)
+VALUES ('Testdrug', 'Testbrand', '1 mg', 'TABLET', 10, '12345', 10.00)
+--------------
+
+ERROR 3819 (HY000) at line 51: Check constraint 'chk_drug_gtin' is violated.
+--------------
+SELECT 'V2: drug with pack price 0' AS test
+--------------
+
++----------------------------+
+| test                       |
++----------------------------+
+| V2: drug with pack price 0 |
++----------------------------+
+--------------
+INSERT INTO drug (generic_name, brand_name, strength, dosage_form, units_per_pack, gtin, pack_price)
+VALUES ('Testdrug', 'Testbrand', '1 mg', 'TABLET', 10, '8900000000001', 0)
+--------------
+
+ERROR 3819 (HY000) at line 55: Check constraint 'chk_drug_price' is violated.
+--------------
+SELECT 'V3: batch that expires before it is made' AS test
+--------------
+
++------------------------------------------+
+| test                                     |
++------------------------------------------+
+| V3: batch that expires before it is made |
++------------------------------------------+
+--------------
+INSERT INTO batch (drug_id, manufacturer_id, batch_no, mfg_date, expiry_date, quantity)
+VALUES (1, 5, CONCAT(@bn, '-V3'), '2026-10-01', '2026-01-01', 10)
+--------------
+
+ERROR 3819 (HY000) at line 59: Check constraint 'chk_batch_dates' is violated.
+--------------
+SELECT 'V4: license that ends before it is issued' AS test
+--------------
+
++-------------------------------------------+
+| test                                      |
++-------------------------------------------+
+| V4: license that ends before it is issued |
++-------------------------------------------+
+--------------
+INSERT INTO participant (name, participant_type, license_no, license_status,
+                         license_issue_date, license_valid_till, city, state)
+VALUES ('Test Pharmacy', 'RETAILER', 'XX-RET-2026-00001', 'ACTIVE',
+        '2026-01-01', '2025-01-01', 'Pune', 'Maharashtra')
+--------------
+
+ERROR 3819 (HY000) at line 63: Check constraint 'chk_license_dates' is violated.
+--------------
+SELECT 'V5: link from M1 to itself (trigger 3 switched off to show the CHECK behind it)' AS test
+--------------
+
++---------------------------------------------------------------------------------+
+| test                                                                            |
++---------------------------------------------------------------------------------+
+| V5: link from M1 to itself (trigger 3 switched off to show the CHECK behind it) |
++---------------------------------------------------------------------------------+
+--------------
+SET @seed_loading = 1
+--------------
+
+--------------
+INSERT INTO link (from_participant, to_participant) VALUES (5, 5)
+--------------
+
+ERROR 3819 (HY000) at line 70: Check constraint 'chk_link_not_self' is violated.
+--------------
+SET @seed_loading = NULL
+--------------
+
+--------------
+SELECT 'V6: shipment marked RECEIVED with no receive time' AS test
+--------------
+
++---------------------------------------------------+
+| test                                              |
++---------------------------------------------------+
+| V6: shipment marked RECEIVED with no receive time |
++---------------------------------------------------+
+--------------
+INSERT INTO shipment (link_id, ship_time, receive_time, status)
+VALUES (1, '2026-10-01 10:00:00', NULL, 'RECEIVED')
+--------------
+
+ERROR 3819 (HY000) at line 74: Check constraint 'chk_shipment_status_time' is violated.
+--------------
+SELECT 'V7: shipment received before it was shipped' AS test
+--------------
+
++---------------------------------------------+
+| test                                        |
++---------------------------------------------+
+| V7: shipment received before it was shipped |
++---------------------------------------------+
+--------------
+INSERT INTO shipment (link_id, ship_time, receive_time, status)
+VALUES (1, '2026-10-01 10:00:00', '2026-09-30 10:00:00', 'RECEIVED')
+--------------
+
+ERROR 3819 (HY000) at line 78: Check constraint 'chk_shipment_times' is violated.
+--------------
+SELECT 'V8: MANUFACTURED event that has a shipment' AS test
+--------------
+
++--------------------------------------------+
+| test                                       |
++--------------------------------------------+
+| V8: MANUFACTURED event that has a shipment |
++--------------------------------------------+
+--------------
+INSERT INTO trace_event (serial_no, event_type, shipment_id, event_time)
+VALUES ('VTEST0000001', 'MANUFACTURED', 1, NOW())
+--------------
+
+ERROR 3819 (HY000) at line 82: Check constraint 'chk_trace_event_shipment' is violated.
+--------------
+SELECT 'V9: license history row where nothing changed' AS test
+--------------
+
++-----------------------------------------------+
+| test                                          |
++-----------------------------------------------+
+| V9: license history row where nothing changed |
++-----------------------------------------------+
+--------------
+INSERT INTO license_history (participant_id, old_status, new_status, changed_at)
+VALUES (5, 'ACTIVE', 'ACTIVE', NOW())
+--------------
+
+ERROR 3819 (HY000) at line 86: Check constraint 'chk_license_history_change' is violated.
+--------------
+SELECT 'V10: risk score of 1.5' AS test
+--------------
+
++------------------------+
+| test                   |
++------------------------+
+| V10: risk score of 1.5 |
++------------------------+
+--------------
+INSERT INTO link_risk_score (link_id, risk_score, model_version) VALUES (1, 1.5, 'test')
+--------------
+
+ERROR 3819 (HY000) at line 90: Check constraint 'chk_link_risk_range' is violated.
+--------------
+SELECT 'V11: material lot of 0 kg' AS test
+--------------
+
++---------------------------+
+| test                      |
++---------------------------+
+| V11: material lot of 0 kg |
++---------------------------+
+--------------
+INSERT INTO material_lot (lot_no, material_name, quantity_sent_kg, quantity_received_kg,
+                          supplier_id, manufacturer_id, received_date, coa_verified)
+VALUES (CONCAT(@bn, '-V11'), 'Maize starch', 0, 100, 3, 5, '2026-10-01', TRUE)
+--------------
+
+ERROR 3819 (HY000) at line 93: Check constraint 'chk_material_lot_sent' is violated.
+--------------
+SELECT 'V12: shipment item for a serial that is not a pack' AS test
+--------------
+
++----------------------------------------------------+
+| test                                               |
++----------------------------------------------------+
+| V12: shipment item for a serial that is not a pack |
++----------------------------------------------------+
+--------------
+INSERT INTO shipment_item (shipment_id, serial_no, received) VALUES (1, 'NOSUCHSERIAL', FALSE)
+--------------
+
+ERROR 1452 (23000) at line 98: Cannot add or update a child row: a foreign key constraint fails (`pharma_counterfeit_db`.`shipment_item`, CONSTRAINT `fk_shipment_item_pack` FOREIGN KEY (`serial_no`) REFERENCES `pack` (`serial_no`))
+--------------
+SELECT 'V13: batch for a drug that does not exist' AS test
+--------------
+
++-------------------------------------------+
+| test                                      |
++-------------------------------------------+
+| V13: batch for a drug that does not exist |
++-------------------------------------------+
+--------------
+INSERT INTO batch (drug_id, manufacturer_id, batch_no, mfg_date, expiry_date, quantity)
+VALUES (999, 5, CONCAT(@bn, '-V13'), '2026-10-01', '2028-10-01', 10)
+--------------
+
+ERROR 1452 (23000) at line 101: Cannot add or update a child row: a foreign key constraint fails (`pharma_counterfeit_db`.`batch`, CONSTRAINT `fk_batch_drug` FOREIGN KEY (`drug_id`) REFERENCES `drug` (`drug_id`))
+--------------
+SELECT 'V14: second drug with an existing GTIN' AS test
+--------------
+
++----------------------------------------+
+| test                                   |
++----------------------------------------+
+| V14: second drug with an existing GTIN |
++----------------------------------------+
+--------------
+INSERT INTO drug (generic_name, brand_name, strength, dosage_form, units_per_pack, gtin, pack_price)
+SELECT 'Copy', 'Copy', '1 mg', 'TABLET', 10, gtin, 10.00 FROM drug WHERE drug_id = 1
+--------------
+
+ERROR 1062 (23000) at line 105: Duplicate entry '8902921277993' for key 'drug.uq_drug_gtin'
+--------------
+SELECT 'V15: second batch with the same manufacturer and batch number' AS test
+--------------
+
++---------------------------------------------------------------+
+| test                                                          |
++---------------------------------------------------------------+
+| V15: second batch with the same manufacturer and batch number |
++---------------------------------------------------------------+
+--------------
+INSERT INTO batch (drug_id, manufacturer_id, batch_no, mfg_date, expiry_date, quantity)
+SELECT drug_id, manufacturer_id, batch_no, mfg_date, expiry_date, quantity
+FROM batch WHERE batch_id = 1
+--------------
+
+ERROR 1062 (23000) at line 109: Duplicate entry '6-SH2601-001' for key 'batch.uq_batch_manufacturer_batchno'
+--------------
+-- =====================================================================
+--------------
+
+--------------
+-- PART T : business rules (triggers and stored procedures)
+--------------
+
+--------------
+-- =====================================================================
+--------------
+
+--------------
+SELECT 'T1: material lot whose supplier is retailer R1 (23)' AS test
+--------------
+
++-----------------------------------------------------+
+| test                                                |
++-----------------------------------------------------+
+| T1: material lot whose supplier is retailer R1 (23) |
++-----------------------------------------------------+
+--------------
+INSERT INTO material_lot (lot_no, material_name, quantity_sent_kg, quantity_received_kg,
+                          supplier_id, manufacturer_id, received_date, coa_verified)
+VALUES (CONCAT(@bn, '-T1'), 'Maize starch', 100, 100, 23, 5, '2026-10-01', TRUE)
+--------------
+
+ERROR 1644 (45000) at line 118: WRONG_PARTICIPANT_TYPE: supplier_id must be a SUPPLIER
+--------------
+SELECT 'T2: batch whose manufacturer is distributor D1 (8)' AS test
+--------------
+
++----------------------------------------------------+
+| test                                               |
++----------------------------------------------------+
+| T2: batch whose manufacturer is distributor D1 (8) |
++----------------------------------------------------+
+--------------
+INSERT INTO batch (drug_id, manufacturer_id, batch_no, mfg_date, expiry_date, quantity)
+VALUES (1, 8, CONCAT(@bn, '-T2'), '2026-10-01', '2028-10-01', 10)
+--------------
+
+ERROR 1644 (45000) at line 123: WRONG_PARTICIPANT_TYPE: manufacturer_id must be a MANUFACTURER
+--------------
+SELECT 'T3: link from distributor D1 (8) back to manufacturer M1 (5)' AS test
+--------------
+
++--------------------------------------------------------------+
+| test                                                         |
++--------------------------------------------------------------+
+| T3: link from distributor D1 (8) back to manufacturer M1 (5) |
++--------------------------------------------------------------+
+--------------
+INSERT INTO link (from_participant, to_participant) VALUES (8, 5)
+--------------
+
+ERROR 1644 (45000) at line 127: INVALID_LINK: allowed pairs are S->M, M->D, D->R and R->CONSUMER
+--------------
+SELECT 'T8: create_batch at M1 using a lot delivered to M2' AS test
+--------------
+
++----------------------------------------------------+
+| test                                               |
++----------------------------------------------------+
+| T8: create_batch at M1 using a lot delivered to M2 |
++----------------------------------------------------+
+--------------
+CALL create_batch(1, 5, CONCAT(@bn, '-T8'), CURDATE(), DATE_ADD(CURDATE(), INTERVAL 2 YEAR),
+                  6, @other_lot, @x)
+--------------
+
+ERROR 1644 (45000) at line 130: LOT_NOT_AT_FACTORY: A lot in the list was delivered to another manufacturer
+--------------
+SELECT 'T6: create_batch with a lot ID that does not exist. The batch row is inserted first, then the lot link fails, so the whole transaction is rolled back' AS test
+--------------
+
++-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| test                                                                                                                                                  |
++-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| T6: create_batch with a lot ID that does not exist. The batch row is inserted first, then the lot link fails, so the whole transaction is rolled back |
++-------------------------------------------------------------------------------------------------------------------------------------------------------+
+--------------
+CALL create_batch(1, 5, CONCAT(@bn, '-RB'), CURDATE(), DATE_ADD(CURDATE(), INTERVAL 2 YEAR),
+                  6, '99999999', @x)
+--------------
+
+ERROR 1452 (23000) at line 134: Cannot add or update a child row: a foreign key constraint fails (`pharma_counterfeit_db`.`batch_material`, CONSTRAINT `fk_batch_material_lot` FOREIGN KEY (`lot_id`) REFERENCES `material_lot` (`lot_id`))
+--------------
+SELECT COUNT(*) AS batches_saved_by_T6 FROM batch WHERE batch_no = CONCAT(@bn, '-RB')
+--------------
+
++---------------------+
+| batches_saved_by_T6 |
++---------------------+
+|                   0 |
++---------------------+
+--------------
+SELECT 'Setup: a valid batch of 6 packs at M1 (stays PENDING)' AS test
+--------------
+
++-------------------------------------------------------+
+| test                                                  |
++-------------------------------------------------------+
+| Setup: a valid batch of 6 packs at M1 (stays PENDING) |
++-------------------------------------------------------+
+--------------
+CALL create_batch(1, 5, @bn, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 2 YEAR), 6, @lots, @b)
+--------------
+
+--------------
+SELECT batch_id, batch_no, quantity, qc_status, batch_hash FROM batch WHERE batch_id = @b
+--------------
+
++----------+-------------+----------+-----------+------------------------------------------------------------------+
+| batch_id | batch_no    | quantity | qc_status | batch_hash                                                       |
++----------+-------------+----------+-----------+------------------------------------------------------------------+
+|      154 | VT-24015417 |        6 | PENDING   | 0eee0766520a57c5bb5e65c01bd2e49dbcc6572f0ae2bde6eeca112deaaeddb6 |
++----------+-------------+----------+-----------+------------------------------------------------------------------+
+--------------
+SELECT * FROM batch_material WHERE batch_id = @b
+--------------
+
++----------+--------+
+| batch_id | lot_id |
++----------+--------+
+|      154 |      3 |
+|      154 |      7 |
++----------+--------+
+--------------
+SELECT 'T7: generate packs for a batch that is still PENDING' AS test
+--------------
+
++------------------------------------------------------+
+| test                                                 |
++------------------------------------------------------+
+| T7: generate packs for a batch that is still PENDING |
++------------------------------------------------------+
+--------------
+CALL generate_packs(@b)
+--------------
+
+ERROR 1644 (45000) at line 144: BATCH_NOT_APPROVED: Packs can be generated only for an APPROVED batch
+--------------
+SELECT 'Setup: approve the batch, generate its packs' AS test
+--------------
+
++----------------------------------------------+
+| test                                         |
++----------------------------------------------+
+| Setup: approve the batch, generate its packs |
++----------------------------------------------+
+--------------
+CALL approve_batch(@b)
+--------------
+
+--------------
+CALL generate_packs(@b)
+--------------
+
+--------------
+SELECT p.serial_no, p.current_owner, p.status, e.event_type, e.event_hash
+FROM pack p JOIN trace_event e ON e.serial_no = p.serial_no
+WHERE p.batch_id = @b ORDER BY p.serial_no
+--------------
+
++--------------+---------------+----------+--------------+------------------------------------------------------------------+
+| serial_no    | current_owner | status   | event_type   | event_hash                                                       |
++--------------+---------------+----------+--------------+------------------------------------------------------------------+
+| 5GQVZ5BZP9WJ |             5 | IN_STOCK | MANUFACTURED | ca027523351ce59ba1867c221694ac3b406fca6c3af2456c51b3d6fc795e10d3 |
+| AXLVBN5FFQXB |             5 | IN_STOCK | MANUFACTURED | 056213614c406e23c4207660d5af23cd77b20152f330fabf54d11eae0a298d30 |
+| E2Q6CZQC9YUY |             5 | IN_STOCK | MANUFACTURED | 622e290897a81cb2fb9ab14334ab13b0d610a7ca9ac4980cc1ad0b4800c932af |
+| H9GC3YDRDCA5 |             5 | IN_STOCK | MANUFACTURED | 0c44d5e9ff114c7fd96a33d6470446b0e0435fc571744f9fc8fcd703081b95d6 |
+| JMBFX4FNMXHE |             5 | IN_STOCK | MANUFACTURED | 6625b72242bc1bf7dbbfcf86d2c4317659d16c68009e3a60eb9d78adbd8bc717 |
+| JZ6HTBSSAQJ9 |             5 | IN_STOCK | MANUFACTURED | 10036012892a9361db34723683a3100c31f29f9eb57e81c5c87deec29eb88fb3 |
++--------------+---------------+----------+--------------+------------------------------------------------------------------+
+--------------
+SELECT serial_no INTO @s1 FROM pack WHERE batch_id = @b ORDER BY serial_no LIMIT 1 OFFSET 0
+--------------
+
+--------------
+SELECT serial_no INTO @s2 FROM pack WHERE batch_id = @b ORDER BY serial_no LIMIT 1 OFFSET 1
+--------------
+
+--------------
+SELECT serial_no INTO @s3 FROM pack WHERE batch_id = @b ORDER BY serial_no LIMIT 1 OFFSET 2
+--------------
+
+--------------
+SELECT serial_no INTO @s4 FROM pack WHERE batch_id = @b ORDER BY serial_no LIMIT 1 OFFSET 3
+--------------
+
+--------------
+SELECT serial_no INTO @s5 FROM pack WHERE batch_id = @b ORDER BY serial_no LIMIT 1 OFFSET 4
+--------------
+
+--------------
+SELECT 'T12: dispatch two packs M1 -> distributor, then receive them; pack state follows (trigger 5)' AS test
+--------------
+
++----------------------------------------------------------------------------------------------+
+| test                                                                                         |
++----------------------------------------------------------------------------------------------+
+| T12: dispatch two packs M1 -> distributor, then receive them; pack state follows (trigger 5) |
++----------------------------------------------------------------------------------------------+
+--------------
+CALL dispatch_shipment(5, @d, CONCAT(@s1, ',', @s2), @sh1)
+--------------
+
+--------------
+SELECT serial_no, current_owner, status FROM pack WHERE serial_no IN (@s1, @s2)
+--------------
+
++--------------+---------------+------------+
+| serial_no    | current_owner | status     |
++--------------+---------------+------------+
+| 5GQVZ5BZP9WJ |             5 | IN_TRANSIT |
+| AXLVBN5FFQXB |             5 | IN_TRANSIT |
++--------------+---------------+------------+
+--------------
+CALL receive_shipment(@sh1, CONCAT(@s1, ',', @s2))
+--------------
+
++-------------+----------+----------+---------+-----------------+---------------+
+| shipment_id | status   | received | missing | unknown_serials | extra_serials |
++-------------+----------+----------+---------+-----------------+---------------+
+|       37978 | RECEIVED |        2 |       0 |               0 |             0 |
++-------------+----------+----------+---------+-----------------+---------------+
+--------------
+SELECT serial_no, current_owner, status FROM pack WHERE serial_no IN (@s1, @s2)
+--------------
+
++--------------+---------------+----------+
+| serial_no    | current_owner | status   |
++--------------+---------------+----------+
+| 5GQVZ5BZP9WJ |            10 | IN_STOCK |
+| AXLVBN5FFQXB |            10 | IN_STOCK |
++--------------+---------------+----------+
+--------------
+SELECT 'T9: dispatch two packs; one arrives, one is missing, and one unknown serial turns up' AS test
+--------------
+
++--------------------------------------------------------------------------------------+
+| test                                                                                 |
++--------------------------------------------------------------------------------------+
+| T9: dispatch two packs; one arrives, one is missing, and one unknown serial turns up |
++--------------------------------------------------------------------------------------+
+--------------
+CALL dispatch_shipment(5, @d, CONCAT(@s3, ',', @s4), @sh2)
+--------------
+
+--------------
+CALL receive_shipment(@sh2, CONCAT(@s3, ',VTFAKE000001'))
+--------------
+
++-------------+---------+----------+---------+-----------------+---------------+
+| shipment_id | status  | received | missing | unknown_serials | extra_serials |
++-------------+---------+----------+---------+-----------------+---------------+
+|       37979 | PARTIAL |        1 |       1 |               1 |             0 |
++-------------+---------+----------+---------+-----------------+---------------+
+--------------
+SELECT rule_code, serial_no, shipment_id, link_id, event_id, severity
+FROM anomaly_flag WHERE flag_id > @f0 ORDER BY flag_id
+--------------
+
++----------------+--------------+-------------+---------+----------+----------+
+| rule_code      | serial_no    | shipment_id | link_id | event_id | severity |
++----------------+--------------+-------------+---------+----------+----------+
+| MISSING_PACK   | H9GC3YDRDCA5 |       37979 |      10 |   271265 | MEDIUM   |
+| UNKNOWN_SERIAL | VTFAKE000001 |       37979 |      10 |   271268 | CRITICAL |
++----------------+--------------+-------------+---------+----------+----------+
+--------------
+SELECT 'T5: the distributor dispatches a pack that is still at the factory' AS test
+--------------
+
++--------------------------------------------------------------------+
+| test                                                               |
++--------------------------------------------------------------------+
+| T5: the distributor dispatches a pack that is still at the factory |
++--------------------------------------------------------------------+
+--------------
+CALL dispatch_shipment(@d, @r, @s5, @x)
+--------------
+
+ERROR 1644 (45000) at line 172: NOT_OWNER: The sender does not own every pack in the list
+--------------
+SELECT 'T4: suspend the distributor (history row appears by itself), then it tries to dispatch' AS test
+--------------
+
++----------------------------------------------------------------------------------------+
+| test                                                                                   |
++----------------------------------------------------------------------------------------+
+| T4: suspend the distributor (history row appears by itself), then it tries to dispatch |
++----------------------------------------------------------------------------------------+
+--------------
+UPDATE participant SET license_status = 'SUSPENDED' WHERE participant_id = @d
+--------------
+
+--------------
+SELECT * FROM license_history WHERE history_id > @h0
+--------------
+
++------------+----------------+------------+------------+---------------------+
+| history_id | participant_id | old_status | new_status | changed_at          |
++------------+----------------+------------+------------+---------------------+
+|         23 |             10 | ACTIVE     | SUSPENDED  | 2026-11-24 01:54:17 |
++------------+----------------+------------+------------+---------------------+
+--------------
+CALL dispatch_shipment(@d, @r, @s2, @x)
+--------------
+
+ERROR 1644 (45000) at line 177: LICENSE_NOT_ACTIVE: Sender license must be ACTIVE to dispatch
+--------------
+UPDATE participant SET license_status = 'ACTIVE' WHERE participant_id = @d
+--------------
+
+--------------
+SELECT 'T10: sell a pack, then try to sell the same serial again' AS test
+--------------
+
++----------------------------------------------------------+
+| test                                                     |
++----------------------------------------------------------+
+| T10: sell a pack, then try to sell the same serial again |
++----------------------------------------------------------+
+--------------
+CALL dispatch_shipment(@d, @r, CONCAT(@s1, ',', @s2), @sh3)
+--------------
+
+--------------
+CALL receive_shipment(@sh3, CONCAT(@s1, ',', @s2))
+--------------
+
++-------------+----------+----------+---------+-----------------+---------------+
+| shipment_id | status   | received | missing | unknown_serials | extra_serials |
++-------------+----------+----------+---------+-----------------+---------------+
+|       37980 | RECEIVED |        2 |       0 |               0 |             0 |
++-------------+----------+----------+---------+-----------------+---------------+
+--------------
+CALL sell_pack(@r, @s1, @res)
+--------------
+
+--------------
+SELECT @res AS first_sale
+--------------
+
++------------+
+| first_sale |
++------------+
+| SOLD       |
++------------+
+--------------
+CALL sell_pack(@r, @s1, @res)
+--------------
+
+--------------
+SELECT @res AS second_sale
+--------------
+
++----------------------+
+| second_sale          |
++----------------------+
+| REFUSED_ALREADY_SOLD |
++----------------------+
+--------------
+SELECT rule_code, serial_no, link_id, event_id, severity
+FROM anomaly_flag WHERE flag_id > @f0 AND rule_code = 'SOLD_TWICE'
+--------------
+
++------------+--------------+---------+----------+----------+
+| rule_code  | serial_no    | link_id | event_id | severity |
++------------+--------------+---------+----------+----------+
+| SOLD_TWICE | 5GQVZ5BZP9WJ |     181 |   271276 | CRITICAL |
++------------+--------------+---------+----------+----------+
+--------------
+SELECT 'T11: sell a pack from an expired batch' AS test
+--------------
+
++----------------------------------------+
+| test                                   |
++----------------------------------------+
+| T11: sell a pack from an expired batch |
++----------------------------------------+
+--------------
+CALL create_batch(1, 5, CONCAT(@bn, '-EXP'), '2024-01-01', '2025-01-01', 1, @lots, @bx)
+--------------
+
+--------------
+CALL approve_batch(@bx)
+--------------
+
+--------------
+CALL generate_packs(@bx)
+--------------
+
+--------------
+SELECT serial_no INTO @e1 FROM pack WHERE batch_id = @bx
+--------------
+
+--------------
+CALL dispatch_shipment(5, @d, @e1, @sh4)
+--------------
+
+--------------
+CALL receive_shipment(@sh4, @e1)
+--------------
+
++-------------+----------+----------+---------+-----------------+---------------+
+| shipment_id | status   | received | missing | unknown_serials | extra_serials |
++-------------+----------+----------+---------+-----------------+---------------+
+|       37982 | RECEIVED |        1 |       0 |               0 |             0 |
++-------------+----------+----------+---------+-----------------+---------------+
+--------------
+CALL dispatch_shipment(@d, @r, @e1, @sh5)
+--------------
+
+--------------
+CALL receive_shipment(@sh5, @e1)
+--------------
+
++-------------+----------+----------+---------+-----------------+---------------+
+| shipment_id | status   | received | missing | unknown_serials | extra_serials |
++-------------+----------+----------+---------+-----------------+---------------+
+|       37983 | RECEIVED |        1 |       0 |               0 |             0 |
++-------------+----------+----------+---------+-----------------+---------------+
+--------------
+CALL sell_pack(@r, @e1, @res)
+--------------
+
+ERROR 1644 (45000) at line 199: EXPIRED: This pack is past its expiry date
+--------------
+SELECT 'T13: recall the batch (recursive CTE lists everyone its packs reached)' AS test
+--------------
+
++------------------------------------------------------------------------+
+| test                                                                   |
++------------------------------------------------------------------------+
+| T13: recall the batch (recursive CTE lists everyone its packs reached) |
++------------------------------------------------------------------------+
+--------------
+CALL recall_batch(@b)
+--------------
+
++----------------+---------------------------+------------------+--------+------------------------+---------------------+--------------------+
+| participant_id | name                      | participant_type | city   | handovers_from_factory | packs_recalled_here | packs_already_sold |
++----------------+---------------------------+------------------+--------+------------------------+---------------------+--------------------+
+|              5 | Vardhan Life Sciences     | MANUFACTURER     | Baddi  |                      0 |                   3 |                  0 |
+|             10 | Jyoti Pharma Distributors | DISTRIBUTOR      | Nagpur |                      1 |                   1 |                  0 |
+|             32 | Navjeevan Pharmacy        | RETAILER         | Bhopal |                      2 |                   1 |                  0 |
+|            103 | CONSUMER                  | CONSUMER         | NULL   |                      3 |                   0 |                  1 |
++----------------+---------------------------+------------------+--------+------------------------+---------------------+--------------------+
+--------------
+SELECT serial_no, current_owner, status FROM pack WHERE batch_id = @b ORDER BY serial_no
+--------------
+
++--------------+---------------+----------+
+| serial_no    | current_owner | status   |
++--------------+---------------+----------+
+| 5GQVZ5BZP9WJ |           103 | SOLD     |
+| AXLVBN5FFQXB |            32 | RECALLED |
+| E2Q6CZQC9YUY |            10 | RECALLED |
+| H9GC3YDRDCA5 |             5 | RECALLED |
+| JMBFX4FNMXHE |             5 | RECALLED |
+| JZ6HTBSSAQJ9 |             5 | RECALLED |
++--------------+---------------+----------+
+--------------
+SELECT 'T13b: selling a recalled pack' AS test
+--------------
+
++-------------------------------+
+| test                          |
++-------------------------------+
+| T13b: selling a recalled pack |
++-------------------------------+
+--------------
+CALL sell_pack(@r, @s2, @res)
+--------------
+
+ERROR 1644 (45000) at line 205: RECALLED: This pack belongs to a recalled batch
+--------------
+SELECT 'Check: every event written by the tests has a hash' AS test
+--------------
+
++----------------------------------------------------+
+| test                                               |
++----------------------------------------------------+
+| Check: every event written by the tests has a hash |
++----------------------------------------------------+
+--------------
+SELECT COUNT(*) AS new_events, SUM(event_hash IS NOT NULL) AS with_hash
+FROM trace_event WHERE event_id > @e0
+--------------
+
++------------+-----------+
+| new_events | with_hash |
++------------+-----------+
+|         29 |        29 |
++------------+-----------+
+--------------
+-- =====================================================================
+--------------
+
+--------------
+-- CLEANUP : remove everything the tests created
+--------------
+
+--------------
+-- (deleting events needs the tamper switch, because trace_event is append-only)
+--------------
+
+--------------
+-- =====================================================================
+--------------
+
+--------------
+SELECT 'Cleanup' AS test
+--------------
+
++---------+
+| test    |
++---------+
+| Cleanup |
++---------+
+--------------
+SET @tamper_demo = 1
+--------------
+
+--------------
+DELETE FROM anomaly_flag    WHERE flag_id     > @f0
+--------------
+
+--------------
+DELETE FROM trace_event     WHERE event_id    > @e0
+--------------
+
+--------------
+DELETE FROM shipment_item   WHERE shipment_id > @sh0
+--------------
+
+--------------
+DELETE FROM shipment        WHERE shipment_id > @sh0
+--------------
+
+--------------
+DELETE FROM pack            WHERE batch_id    > @b0
+--------------
+
+--------------
+DELETE FROM batch_material  WHERE batch_id    > @b0
+--------------
+
+--------------
+DELETE FROM batch           WHERE batch_id    > @b0
+--------------
+
+--------------
+DELETE FROM license_history WHERE history_id  > @h0
+--------------
+
+--------------
+SET @tamper_demo = NULL
+--------------
+
+--------------
+SELECT (SELECT COUNT(*) FROM batch)       AS batches,
+       (SELECT COUNT(*) FROM pack)        AS packs,
+       (SELECT COUNT(*) FROM shipment)    AS shipments,
+       (SELECT COUNT(*) FROM trace_event) AS events,
+       (SELECT license_status FROM participant WHERE participant_id = @d) AS distributor_license
+--------------
+
++---------+-------+-----------+--------+---------------------+
+| batches | packs | shipments | events | distributor_license |
++---------+-------+-----------+--------+---------------------+
+|     150 | 48468 |     37977 | 271250 | ACTIVE              |
++---------+-------+-----------+--------+---------------------+
+--------------
+-- Expected after cleanup on the seed: 150, 48468, 37977, 271250, ACTIVE
+--------------
+

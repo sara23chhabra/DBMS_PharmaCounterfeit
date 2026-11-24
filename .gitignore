@@ -1,5 +1,21 @@
+
+# Mac system files
+.DS_Store
+
+# Generated output
 output/
+
+# Environment variables
+.env
+
+# Python cache
 __pycache__/
 *.pyc
-.env
+
+# Virtual environments
+venv/
+.venv/
+
+# IDE files
 .vscode/
+.idea/

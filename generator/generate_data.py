@@ -1051,13 +1051,14 @@ def write_sql(w, state, path):
             line += item
         f.write(line + "\n\n")
         f.write("USE pharma_counterfeit_db;\n\n")
+        f.write("-- Tells the triggers that this is the seed load, so they stay quiet.\n")
+        f.write("SET @seed_loading = 1;\n\n")
         f.write("-- OPTIONAL CLEAR: remove the '-- ' to empty all tables before reloading.\n")
         for t in ["risk_factor", "link_risk_score", "injected_counterfeit", "anomaly_flag", "trace_event",
                   "shipment_item", "shipment", "link", "pack", "batch_material", "batch", "material_lot",
                   "drug", "license_history", "participant"]:
             f.write(f"-- DELETE FROM {t};\n")
-        f.write("\n-- Tells the (future) triggers that this is the seed load, so they stay quiet.\n")
-        f.write("SET @seed_loading = 1;\nSTART TRANSACTION;\n\n")
+        f.write("\nSTART TRANSACTION;\n\n")
 
         write_inserts(f, "participant",
                       ["participant_id", "name", "participant_type", "license_no", "license_status",
