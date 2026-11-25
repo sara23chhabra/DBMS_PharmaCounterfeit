@@ -1,0 +1,16 @@
+# Copy this file to the project folder as  .env  (the same file her test runner uses)
+# and fill in the passwords. .env is in .gitignore: never commit it.
+
+MYSQL_HOST=localhost
+MONGO_URI=mongodb://localhost:27017
+DB_NAME=pharma_counterfeit_db
+TEST_DB_NAME=pharma_counterfeit_test
+
+MYSQL_ADMIN_USER=admin
+MYSQL_ADMIN_PASSWORD=
+MYSQL_APP_PASSWORD=
+MYSQL_P5_PASSWORD=
+MYSQL_P23_PASSWORD=
+MYSQL_DETECTION_PASSWORD=
+MYSQL_LEDGER_PASSWORD=
+MYSQL_READONLY_PASSWORD=

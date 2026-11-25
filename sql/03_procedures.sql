@@ -12,6 +12,7 @@
 --   receive_shipment    compares scanned serials with the dispatch list
 --   sell_pack           one-pack shipment to CONSUMER + SOLD event
 --   recall_batch        recursive CTE + RECALLED events
+--   caller_participant_id  helper: which participant a p_<id> login is
 --
 -- Pattern used by every procedure
 --   1. Read and check first. A broken rule raises
@@ -32,6 +33,25 @@
 USE pharma_counterfeit_db;
 
 DELIMITER $$
+
+-- ---------------------------------------------------------------------
+-- Helper: which participant is calling?
+--   A participant login is named p_<participant_id> (e.g. p_5 = M1).
+--   USER() is the account that connected, even inside a procedure, so a
+--   procedure can check that p_5 only acts for participant 5.
+--   Other accounts (admin, app) return NULL: they may act for anyone.
+-- ---------------------------------------------------------------------
+DROP FUNCTION IF EXISTS caller_participant_id $$
+CREATE FUNCTION caller_participant_id()
+RETURNS INT UNSIGNED
+NOT DETERMINISTIC NO SQL
+BEGIN
+  DECLARE v_login VARCHAR(100) DEFAULT SUBSTRING_INDEX(USER(), '@', 1);
+  IF v_login REGEXP '^p_[0-9]+$' THEN
+    RETURN CAST(SUBSTRING(v_login, 3) AS UNSIGNED);
+  END IF;
+  RETURN NULL;
+END $$
 
 -- ---------------------------------------------------------------------
 -- Helper: fill event_hash for every event newer than p_after_event_id
@@ -106,6 +126,11 @@ BEGIN
     ROLLBACK;
     RESIGNAL;
   END;
+
+  IF caller_participant_id() IS NOT NULL AND caller_participant_id() <> p_manufacturer_id THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'NOT_YOUR_ACCOUNT: A participant login can act only for its own participant ID';
+  END IF;
 
   DROP TEMPORARY TABLE IF EXISTS tmp_lots;
   CREATE TEMPORARY TABLE tmp_lots (lot_id INT UNSIGNED PRIMARY KEY);
@@ -198,6 +223,10 @@ BEGIN
     SIGNAL SQLSTATE '45000'
       SET MESSAGE_TEXT = 'BATCH_NOT_FOUND: No batch with this ID';
   END IF;
+  IF caller_participant_id() IS NOT NULL AND caller_participant_id() <> v_manufacturer THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'NOT_YOUR_ACCOUNT: A participant login can act only for its own participant ID';
+  END IF;
   IF v_status <> 'APPROVED' THEN
     SIGNAL SQLSTATE '45000'
       SET MESSAGE_TEXT = 'BATCH_NOT_APPROVED: Packs can be generated only for an APPROVED batch';
@@ -261,6 +290,11 @@ BEGIN
     ROLLBACK;
     RESIGNAL;
   END;
+
+  IF caller_participant_id() IS NOT NULL AND caller_participant_id() <> p_from_id THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'NOT_YOUR_ACCOUNT: A participant login can act only for its own participant ID';
+  END IF;
 
   SET v_link = (SELECT link_id FROM link
                 WHERE from_participant = p_from_id AND to_participant = p_to_id);
@@ -359,6 +393,10 @@ BEGIN
   IF v_link IS NULL THEN
     SIGNAL SQLSTATE '45000'
       SET MESSAGE_TEXT = 'SHIPMENT_NOT_FOUND: No shipment with this ID';
+  END IF;
+  IF caller_participant_id() IS NOT NULL AND caller_participant_id() <> (SELECT to_participant FROM link WHERE link_id = v_link) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'NOT_YOUR_ACCOUNT: A participant login can act only for its own participant ID';
   END IF;
   IF v_status <> 'DISPATCHED' THEN
     SIGNAL SQLSTATE '45000'
@@ -475,6 +513,11 @@ proc: BEGIN
   END;
 
   SET p_result = NULL;
+
+  IF caller_participant_id() IS NOT NULL AND caller_participant_id() <> p_retailer_id THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'NOT_YOUR_ACCOUNT: A participant login can act only for its own participant ID';
+  END IF;
 
   SET v_link = (SELECT l.link_id
                 FROM link l
@@ -636,5 +679,7 @@ END $$
 
 DELIMITER ;
 
--- Check: should list 8 procedures.
+-- Check: should list 8 procedures (and 1 function, caller_participant_id).
+-- Re-running this file drops and re-creates the procedures, which also removes
+-- their EXECUTE grants: run 05_roles.sql again afterwards.
 -- SHOW PROCEDURE STATUS WHERE Db = 'pharma_counterfeit_db';
