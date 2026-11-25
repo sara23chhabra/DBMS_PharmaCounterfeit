@@ -14,14 +14,17 @@ Set them once per terminal before running a script, e.g.
 Needs:  pip install mysql-connector-python pymongo
 """
 
+"""Shared MySQL and MongoDB connections for the Pharma Counterfeit project."""
+
 import os
 
-DB_NAME = "pharma_counterfeit_db"      # same name in MySQL and MongoDB
+DB_NAME = os.environ.get("DB_NAME", "pharma_counterfeit_db")
 
 
 def get_mysql():
-    """Open a MySQL connection (autocommit off: call conn.commit() yourself)."""
+    """Open a MySQL connection using the active environment credentials."""
     import mysql.connector
+
     return mysql.connector.connect(
         host=os.environ.get("MYSQL_HOST", "localhost"),
         user=os.environ.get("MYSQL_USER", "root"),
@@ -32,7 +35,8 @@ def get_mysql():
 
 
 def get_mongo_db():
-    """Return the MongoDB database object (collections: ledger_blocks, scan_logs)."""
+    """Return the active MongoDB database."""
     from pymongo import MongoClient
+
     client = MongoClient(os.environ.get("MONGO_URI", "mongodb://localhost:27017"))
     return client[DB_NAME]

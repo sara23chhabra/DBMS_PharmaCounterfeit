@@ -1,0 +1,116 @@
+PHARMA COUNTERFEIT DBMS - SECURITY AND LEDGER TESTS
+Started: 2026-11-25T09:02:46+05:30
+MySQL test database: pharma_counterfeit_test
+MongoDB test database: pharma_counterfeit_test
+No main database is intentionally accessed by this runner.
+
+SECURITY TESTS S1-S9
+Reading SQL tests from tests/security_tests.sql
+Target database: pharma_counterfeit_test
+[PASS] S1: received MySQL error 1142; expected 1142: INSERT command denied to user 'readonly'@'localhost' for table 'shipment'
+[PASS] S2: received MySQL error 1142; expected 1142: SELECT command denied to user 'detection'@'localhost' for table 'injected_counterfeit'
+[PASS] S3: detection user inserted into anomaly_flag and retrieved the test flag; transaction rolled back
+[PASS] S4: received MySQL error 1142; expected 1142: UPDATE command denied to user 'app'@'localhost' for table 'trace_event'
+[PASS] S5: received MySQL error 1142; expected 1142: DELETE command denied to user 'app'@'localhost' for table 'shipment'
+[PASS] S6: p_5 sees 50 batches; rows not owned by manufacturer 5: 0; expected 50 and 0
+[PASS] S7: p_23 sees 113 packs; rows not owned by retailer 23: 0; expected 0
+[PASS] S8: received MySQL error 1143; expected 1143: UPDATE command denied to user 'ledger'@'localhost' for column 'event_type' in table 'trace_event'
+[PASS] S9: received MySQL error 1142; expected 1142: INSERT command denied to user 'p_5'@'localhost' for table 'batch'
+
+LEDGER TESTS L1-L8
+Checking the pre-prepared test ledger...
+Test ledger is ready with 4933 blocks.
+[PASS] L1: received trigger response: 1644 (45000): APPEND_ONLY: trace_event rows cannot be changed
+[PASS] L2: received trigger response: 1644 (45000): APPEND_ONLY: trace_event rows cannot be deleted
+RECONCILIATION REPORT
+=====================
+[HASH_MISMATCH] Event hash mismatch for event_id 1.
+[HASH_MISMATCH] Ledger hash mismatch for event_id 1.
+
+SUMMARY
+-------
+LEDGER_MISSING: 0
+HASH_MISMATCH: 2
+CHAIN_BROKEN: 0
+Total findings: 2
+[PASS] L3: reconciliation detected HASH_MISMATCH for event id 1
+RECONCILIATION REPORT
+=====================
+[HASH_MISMATCH] Lot hash mismatch for lot_id 1.
+[HASH_MISMATCH] Ledger hash mismatch for lot_id 1.
+[HASH_MISMATCH] Event hash mismatch for event_id 1.
+[HASH_MISMATCH] Ledger hash mismatch for event_id 1.
+
+SUMMARY
+-------
+LEDGER_MISSING: 0
+HASH_MISMATCH: 4
+CHAIN_BROKEN: 0
+Total findings: 4
+[PASS] L4: reconciliation detected HASH_MISMATCH for lot id 1
+RECONCILIATION REPORT
+=====================
+[HASH_MISMATCH] Lot hash mismatch for lot_id 1.
+[HASH_MISMATCH] Ledger hash mismatch for lot_id 1.
+[HASH_MISMATCH] Batch hash mismatch for batch_id 1.
+[HASH_MISMATCH] Ledger hash mismatch for batch_id 1.
+[HASH_MISMATCH] Event hash mismatch for event_id 1.
+[HASH_MISMATCH] Ledger hash mismatch for event_id 1.
+
+SUMMARY
+-------
+LEDGER_MISSING: 0
+HASH_MISMATCH: 6
+CHAIN_BROKEN: 0
+Total findings: 6
+[PASS] L5: reconciliation detected HASH_MISMATCH for batch id 1
+RECONCILIATION REPORT
+=====================
+[CHAIN_BROKEN] Block hash mismatch at block 0.
+[HASH_MISMATCH] Lot hash mismatch for lot_id 1.
+[HASH_MISMATCH] Ledger hash mismatch for lot_id 1.
+[HASH_MISMATCH] Batch hash mismatch for batch_id 1.
+[HASH_MISMATCH] Ledger hash mismatch for batch_id 1.
+[HASH_MISMATCH] Event hash mismatch for event_id 1.
+[HASH_MISMATCH] Ledger hash mismatch for event_id 1.
+
+SUMMARY
+-------
+LEDGER_MISSING: 0
+HASH_MISMATCH: 6
+CHAIN_BROKEN: 1
+Total findings: 7
+[PASS] L6: reconciliation detected CHAIN_BROKEN at block 0
+[PASS] L7: verify.py returned FAKE for tampered serial LLWQYUFSNTJV; reasons: SQL event hash mismatch for event 1.; This serial has a previous SOLD event.
+RECONCILIATION REPORT
+=====================
+No reconciliation issues found.
+
+SUMMARY
+-------
+LEDGER_MISSING: 0
+HASH_MISMATCH: 0
+CHAIN_BROKEN: 0
+Total findings: 0
+[PASS] L8: restored MySQL records; remaining relevant hash mismatches=0; Mongo block restored=True
+
+FINAL SUMMARY
+S1: PASS - received MySQL error 1142; expected 1142: INSERT command denied to user 'readonly'@'localhost' for table 'shipment'
+S2: PASS - received MySQL error 1142; expected 1142: SELECT command denied to user 'detection'@'localhost' for table 'injected_counterfeit'
+S3: PASS - detection user inserted into anomaly_flag and retrieved the test flag; transaction rolled back
+S4: PASS - received MySQL error 1142; expected 1142: UPDATE command denied to user 'app'@'localhost' for table 'trace_event'
+S5: PASS - received MySQL error 1142; expected 1142: DELETE command denied to user 'app'@'localhost' for table 'shipment'
+S6: PASS - p_5 sees 50 batches; rows not owned by manufacturer 5: 0; expected 50 and 0
+S7: PASS - p_23 sees 113 packs; rows not owned by retailer 23: 0; expected 0
+S8: PASS - received MySQL error 1143; expected 1143: UPDATE command denied to user 'ledger'@'localhost' for column 'event_type' in table 'trace_event'
+S9: PASS - received MySQL error 1142; expected 1142: INSERT command denied to user 'p_5'@'localhost' for table 'batch'
+L1: PASS - received trigger response: 1644 (45000): APPEND_ONLY: trace_event rows cannot be changed
+L2: PASS - received trigger response: 1644 (45000): APPEND_ONLY: trace_event rows cannot be deleted
+L3: PASS - reconciliation detected HASH_MISMATCH for event id 1
+L4: PASS - reconciliation detected HASH_MISMATCH for lot id 1
+L5: PASS - reconciliation detected HASH_MISMATCH for batch id 1
+L6: PASS - reconciliation detected CHAIN_BROKEN at block 0
+L7: PASS - verify.py returned FAKE for tampered serial LLWQYUFSNTJV; reasons: SQL event hash mismatch for event 1.; This serial has a previous SOLD event.
+L8: PASS - restored MySQL records; remaining relevant hash mismatches=0; Mongo block restored=True
+TOTAL: 17 passed, 0 failed, 17 executed
+Finished: 2026-11-25T09:04:43+05:30

@@ -145,3 +145,105 @@ TO 'role_readonly'@'%';
 
 GRANT SELECT ON pharma_counterfeit_db.v_my_stock
 TO 'role_readonly'@'%';
+
+
+-- create the application role
+CREATE ROLE IF NOT EXISTS 'role_app'@'%';
+
+-- allow reading and inserting into real project tables
+GRANT SELECT, INSERT ON pharma_counterfeit_db.participant
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.license_history
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.drug
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.material_lot
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.batch
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.batch_material
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.pack
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.link
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.shipment
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.shipment_item
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.trace_event
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.anomaly_flag
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.link_risk_score
+TO 'role_app'@'%';
+
+GRANT SELECT, INSERT ON pharma_counterfeit_db.risk_factor
+TO 'role_app'@'%';
+
+-- allow execution of application procedures
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.create_batch
+TO 'role_app'@'%';
+
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.approve_batch
+TO 'role_app'@'%';
+
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.generate_packs
+TO 'role_app'@'%';
+
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.dispatch_shipment
+TO 'role_app'@'%';
+
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.receive_shipment
+TO 'role_app'@'%';
+
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.sell_pack
+TO 'role_app'@'%';
+
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.recall_batch
+TO 'role_app'@'%';
+
+
+-- create manufacturer and retailer roles
+CREATE ROLE IF NOT EXISTS 'role_manufacturer'@'%';
+CREATE ROLE IF NOT EXISTS 'role_retailer'@'%';
+
+-- manufacturer can view only their own batches and stock
+GRANT SELECT ON pharma_counterfeit_db.v_my_batches
+TO 'role_manufacturer'@'%';
+
+GRANT SELECT ON pharma_counterfeit_db.v_my_stock
+TO 'role_manufacturer'@'%';
+
+-- manufacturer can execute only manufacturer operations
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.create_batch
+TO 'role_manufacturer'@'%';
+
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.generate_packs
+TO 'role_manufacturer'@'%';
+
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.dispatch_shipment
+TO 'role_manufacturer'@'%';
+
+-- retailer can view only their own stock
+GRANT SELECT ON pharma_counterfeit_db.v_my_stock
+TO 'role_retailer'@'%';
+
+-- retailer can execute only retailer operations
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.receive_shipment
+TO 'role_retailer'@'%';
+
+GRANT EXECUTE ON PROCEDURE pharma_counterfeit_db.sell_pack
+TO 'role_retailer'@'%';

@@ -19,3 +19,11 @@ venv/
 # IDE files
 .vscode/
 .idea/
+
+#session files
+sessions/rough.sql
+sessions/rough.txt
+sessions/09_create_demo_users_output.txt
+sessions/08_index_demo_output.txt
+sessions/10_login_verification_output.txt
+sessions/11_test_database_setup_output.txt

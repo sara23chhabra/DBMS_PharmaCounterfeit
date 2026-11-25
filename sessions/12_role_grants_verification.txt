@@ -1,0 +1,171 @@
++-------------------------------------------------------------------------+
+| Grants for role_admin@%                                                 |
++-------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `role_admin`@`%`                                  |
+| GRANT ALL PRIVILEGES ON `pharma_counterfeit_db`.* TO `role_admin`@`%`   |
+| GRANT ALL PRIVILEGES ON `pharma_counterfeit_test`.* TO `role_admin`@`%` |
++-------------------------------------------------------------------------+
++--------------------------------------------------------------------------------------------+
+| Grants for role_app@%                                                                      |
++--------------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `role_app`@`%`                                                       |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`anomaly_flag` TO `role_app`@`%`           |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`batch_material` TO `role_app`@`%`         |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`batch` TO `role_app`@`%`                  |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`drug` TO `role_app`@`%`                   |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`license_history` TO `role_app`@`%`        |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`link_risk_score` TO `role_app`@`%`        |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`link` TO `role_app`@`%`                   |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`material_lot` TO `role_app`@`%`           |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`pack` TO `role_app`@`%`                   |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`participant` TO `role_app`@`%`            |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`risk_factor` TO `role_app`@`%`            |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`shipment_item` TO `role_app`@`%`          |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`shipment` TO `role_app`@`%`               |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`trace_event` TO `role_app`@`%`            |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`anomaly_flag` TO `role_app`@`%`         |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`batch_material` TO `role_app`@`%`       |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`batch` TO `role_app`@`%`                |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`drug` TO `role_app`@`%`                 |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`license_history` TO `role_app`@`%`      |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`link_risk_score` TO `role_app`@`%`      |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`link` TO `role_app`@`%`                 |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`material_lot` TO `role_app`@`%`         |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`pack` TO `role_app`@`%`                 |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`participant` TO `role_app`@`%`          |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`risk_factor` TO `role_app`@`%`          |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`shipment_item` TO `role_app`@`%`        |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`shipment` TO `role_app`@`%`             |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`trace_event` TO `role_app`@`%`          |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`approve_batch` TO `role_app`@`%`       |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`create_batch` TO `role_app`@`%`        |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`dispatch_shipment` TO `role_app`@`%`   |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`generate_packs` TO `role_app`@`%`      |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`recall_batch` TO `role_app`@`%`        |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`receive_shipment` TO `role_app`@`%`    |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`sell_pack` TO `role_app`@`%`           |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`approve_batch` TO `role_app`@`%`     |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`create_batch` TO `role_app`@`%`      |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`dispatch_shipment` TO `role_app`@`%` |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`generate_packs` TO `role_app`@`%`    |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`recall_batch` TO `role_app`@`%`      |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`receive_shipment` TO `role_app`@`%`  |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`sell_pack` TO `role_app`@`%`         |
++--------------------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------------------+
+| Grants for role_manufacturer@%                                                                      |
++-----------------------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `role_manufacturer`@`%`                                                       |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_my_batches` TO `role_manufacturer`@`%`                   |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_my_stock` TO `role_manufacturer`@`%`                     |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_my_batches` TO `role_manufacturer`@`%`                 |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_my_stock` TO `role_manufacturer`@`%`                   |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`create_batch` TO `role_manufacturer`@`%`        |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`dispatch_shipment` TO `role_manufacturer`@`%`   |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`generate_packs` TO `role_manufacturer`@`%`      |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`create_batch` TO `role_manufacturer`@`%`      |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`dispatch_shipment` TO `role_manufacturer`@`%` |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`generate_packs` TO `role_manufacturer`@`%`    |
++-----------------------------------------------------------------------------------------------------+
++------------------------------------------------------------------------------------------------+
+| Grants for role_retailer@%                                                                     |
++------------------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `role_retailer`@`%`                                                      |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_my_stock` TO `role_retailer`@`%`                    |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_my_stock` TO `role_retailer`@`%`                  |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`receive_shipment` TO `role_retailer`@`%`   |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_db`.`sell_pack` TO `role_retailer`@`%`          |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`receive_shipment` TO `role_retailer`@`%` |
+| GRANT EXECUTE ON PROCEDURE `pharma_counterfeit_test`.`sell_pack` TO `role_retailer`@`%`        |
++------------------------------------------------------------------------------------------------+
++------------------------------------------------------------------------------------------+
+| Grants for role_detection@%                                                              |
++------------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `role_detection`@`%`                                               |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_db`.`anomaly_flag` TO `role_detection`@`%`   |
+| GRANT SELECT ON `pharma_counterfeit_db`.`batch_material` TO `role_detection`@`%`         |
+| GRANT SELECT ON `pharma_counterfeit_db`.`batch` TO `role_detection`@`%`                  |
+| GRANT SELECT ON `pharma_counterfeit_db`.`drug` TO `role_detection`@`%`                   |
+| GRANT SELECT ON `pharma_counterfeit_db`.`license_history` TO `role_detection`@`%`        |
+| GRANT SELECT ON `pharma_counterfeit_db`.`link_risk_score` TO `role_detection`@`%`        |
+| GRANT SELECT ON `pharma_counterfeit_db`.`link` TO `role_detection`@`%`                   |
+| GRANT SELECT ON `pharma_counterfeit_db`.`material_lot` TO `role_detection`@`%`           |
+| GRANT SELECT ON `pharma_counterfeit_db`.`pack` TO `role_detection`@`%`                   |
+| GRANT SELECT ON `pharma_counterfeit_db`.`participant` TO `role_detection`@`%`            |
+| GRANT SELECT ON `pharma_counterfeit_db`.`risk_factor` TO `role_detection`@`%`            |
+| GRANT SELECT ON `pharma_counterfeit_db`.`shipment_item` TO `role_detection`@`%`          |
+| GRANT SELECT ON `pharma_counterfeit_db`.`shipment` TO `role_detection`@`%`               |
+| GRANT SELECT ON `pharma_counterfeit_db`.`trace_event` TO `role_detection`@`%`            |
+| GRANT SELECT, INSERT ON `pharma_counterfeit_test`.`anomaly_flag` TO `role_detection`@`%` |
+| GRANT SELECT ON `pharma_counterfeit_test`.`batch_material` TO `role_detection`@`%`       |
+| GRANT SELECT ON `pharma_counterfeit_test`.`batch` TO `role_detection`@`%`                |
+| GRANT SELECT ON `pharma_counterfeit_test`.`drug` TO `role_detection`@`%`                 |
+| GRANT SELECT ON `pharma_counterfeit_test`.`license_history` TO `role_detection`@`%`      |
+| GRANT SELECT ON `pharma_counterfeit_test`.`link_risk_score` TO `role_detection`@`%`      |
+| GRANT SELECT ON `pharma_counterfeit_test`.`link` TO `role_detection`@`%`                 |
+| GRANT SELECT ON `pharma_counterfeit_test`.`material_lot` TO `role_detection`@`%`         |
+| GRANT SELECT ON `pharma_counterfeit_test`.`pack` TO `role_detection`@`%`                 |
+| GRANT SELECT ON `pharma_counterfeit_test`.`participant` TO `role_detection`@`%`          |
+| GRANT SELECT ON `pharma_counterfeit_test`.`risk_factor` TO `role_detection`@`%`          |
+| GRANT SELECT ON `pharma_counterfeit_test`.`shipment_item` TO `role_detection`@`%`        |
+| GRANT SELECT ON `pharma_counterfeit_test`.`shipment` TO `role_detection`@`%`             |
+| GRANT SELECT ON `pharma_counterfeit_test`.`trace_event` TO `role_detection`@`%`          |
++------------------------------------------------------------------------------------------+
++---------------------------------------------------------------------------------------------------------+
+| Grants for role_ledger@%                                                                                |
++---------------------------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `role_ledger`@`%`                                                                 |
+| GRANT SELECT ON `pharma_counterfeit_db`.`anomaly_flag` TO `role_ledger`@`%`                             |
+| GRANT SELECT ON `pharma_counterfeit_db`.`batch_material` TO `role_ledger`@`%`                           |
+| GRANT SELECT, UPDATE (`ledger_synced`) ON `pharma_counterfeit_db`.`batch` TO `role_ledger`@`%`          |
+| GRANT SELECT ON `pharma_counterfeit_db`.`drug` TO `role_ledger`@`%`                                     |
+| GRANT SELECT ON `pharma_counterfeit_db`.`license_history` TO `role_ledger`@`%`                          |
+| GRANT SELECT ON `pharma_counterfeit_db`.`link_risk_score` TO `role_ledger`@`%`                          |
+| GRANT SELECT ON `pharma_counterfeit_db`.`link` TO `role_ledger`@`%`                                     |
+| GRANT SELECT, UPDATE (`ledger_synced`) ON `pharma_counterfeit_db`.`material_lot` TO `role_ledger`@`%`   |
+| GRANT SELECT ON `pharma_counterfeit_db`.`pack` TO `role_ledger`@`%`                                     |
+| GRANT SELECT ON `pharma_counterfeit_db`.`participant` TO `role_ledger`@`%`                              |
+| GRANT SELECT ON `pharma_counterfeit_db`.`risk_factor` TO `role_ledger`@`%`                              |
+| GRANT SELECT ON `pharma_counterfeit_db`.`shipment_item` TO `role_ledger`@`%`                            |
+| GRANT SELECT ON `pharma_counterfeit_db`.`shipment` TO `role_ledger`@`%`                                 |
+| GRANT SELECT, UPDATE (`ledger_synced`) ON `pharma_counterfeit_db`.`trace_event` TO `role_ledger`@`%`    |
+| GRANT SELECT ON `pharma_counterfeit_test`.`anomaly_flag` TO `role_ledger`@`%`                           |
+| GRANT SELECT ON `pharma_counterfeit_test`.`batch_material` TO `role_ledger`@`%`                         |
+| GRANT SELECT, UPDATE (`ledger_synced`) ON `pharma_counterfeit_test`.`batch` TO `role_ledger`@`%`        |
+| GRANT SELECT ON `pharma_counterfeit_test`.`drug` TO `role_ledger`@`%`                                   |
+| GRANT SELECT ON `pharma_counterfeit_test`.`license_history` TO `role_ledger`@`%`                        |
+| GRANT SELECT ON `pharma_counterfeit_test`.`link_risk_score` TO `role_ledger`@`%`                        |
+| GRANT SELECT ON `pharma_counterfeit_test`.`link` TO `role_ledger`@`%`                                   |
+| GRANT SELECT, UPDATE (`ledger_synced`) ON `pharma_counterfeit_test`.`material_lot` TO `role_ledger`@`%` |
+| GRANT SELECT ON `pharma_counterfeit_test`.`pack` TO `role_ledger`@`%`                                   |
+| GRANT SELECT ON `pharma_counterfeit_test`.`participant` TO `role_ledger`@`%`                            |
+| GRANT SELECT ON `pharma_counterfeit_test`.`risk_factor` TO `role_ledger`@`%`                            |
+| GRANT SELECT ON `pharma_counterfeit_test`.`shipment_item` TO `role_ledger`@`%`                          |
+| GRANT SELECT ON `pharma_counterfeit_test`.`shipment` TO `role_ledger`@`%`                               |
+| GRANT SELECT, UPDATE (`ledger_synced`) ON `pharma_counterfeit_test`.`trace_event` TO `role_ledger`@`%`  |
++---------------------------------------------------------------------------------------------------------+
++-------------------------------------------------------------------------------------+
+| Grants for role_readonly@%                                                          |
++-------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `role_readonly`@`%`                                           |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_distributor` TO `role_readonly`@`%`      |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_link_stats` TO `role_readonly`@`%`       |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_link` TO `role_readonly`@`%`             |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_manufacturer` TO `role_readonly`@`%`     |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_my_batches` TO `role_readonly`@`%`       |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_my_stock` TO `role_readonly`@`%`         |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_open_flags` TO `role_readonly`@`%`       |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_retailer` TO `role_readonly`@`%`         |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_serial_journey` TO `role_readonly`@`%`   |
+| GRANT SELECT ON `pharma_counterfeit_db`.`v_supplier` TO `role_readonly`@`%`         |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_distributor` TO `role_readonly`@`%`    |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_link_stats` TO `role_readonly`@`%`     |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_link` TO `role_readonly`@`%`           |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_manufacturer` TO `role_readonly`@`%`   |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_my_batches` TO `role_readonly`@`%`     |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_my_stock` TO `role_readonly`@`%`       |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_open_flags` TO `role_readonly`@`%`     |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_retailer` TO `role_readonly`@`%`       |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_serial_journey` TO `role_readonly`@`%` |
+| GRANT SELECT ON `pharma_counterfeit_test`.`v_supplier` TO `role_readonly`@`%`       |
++-------------------------------------------------------------------------------------+
